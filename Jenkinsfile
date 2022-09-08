@@ -1,3 +1,5 @@
 node('built-in') {
-    sh 'printenv | sort'
+    deleteDir()
+    sh 'printenv > printenv.txt | sort'
+    archiveArtifacts artifacts: '*.txt', allowEmptyArchive: true
 }
