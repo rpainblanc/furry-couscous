@@ -180,12 +180,12 @@ pipeline {
                                         tm_events_to_check.add(event)
                                     }
 
-                                    def skip_pr = false
+                                    def skip_pr = true
                                     for (event in tm_events_to_check) {
                                         if (event.event == 'committed') {
                                             // There is a commit more recent than the last execution time
                                             log_message(messages, "A commit exists on PR ${pr.number} (${pr.pull_request.url}) which is more recent than the last build ${last_build.id}, waiting for the GitHub plugin to trigger a new one soon")
-                                            skip_pr = true
+                                            // No need to scan further
                                             break
                                         }
                                         
@@ -193,12 +193,15 @@ pipeline {
                                             // Since we are already filtering PRs having the expected labels, we don't care which
                                             // label was added (this label may even have been removed since), just that any label was added
                                             log_message(messages, "A label was added on PR ${pr.number} (${pr.pull_request.url}) after the last build ${last_build.id} was executed, need to trigger a new build explicitly")
-                                            break
+                                            skip_pr = false
+                                            continue
                                         }
                                         
                                         if (event.event == 'commented') {
-                                            // Check comment content is actually a builder template
-                                            // TODO
+                                            // TODO Check comment content is actually a builder template
+                                            log_message(messages, "A comment was added on PR ${pr.number} (${pr.pull_request.url}) after the last build ${last_build.id} was executed, need to trigger a new build explicitly")
+                                            skip_pr = false
+                                            continue
                                         }
                                     }
                                     job = null
