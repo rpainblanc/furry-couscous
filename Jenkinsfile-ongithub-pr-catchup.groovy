@@ -152,7 +152,7 @@ pipeline {
                                     }
                                     //job.scheduleBuild(0, new hudson.model.Cause.UserIdCause("jenkins"))
                                     def tm_events = getGitHubPRIssueTimelineEvents(repository_owner, repository_name, env.GITHUB_PASSWORD, pr.number)
-                                    log_message(messages, "Job exists for PR ${pr.number} (${pr.pull_request.url}) and last build is ${last_build.id} (${last_build.url}, startTime=${last_build.startTimeInMillis})")
+                                    log_message(messages, "Job exists for PR ${pr.number} (${pr.pull_request.url}) and last build is ${last_build.id} (${env.JENKINS_URL}${last_build.url}, startTime=${last_build.startTimeInMillis})")
                                     // Scan the timeline events received **after** the last build start time
                                     def tm_events_to_check = []
                                     for (event in tm_events) {
