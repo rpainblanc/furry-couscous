@@ -112,7 +112,9 @@ def log_message(def messages, def message) {
 node('built-in') {
     def commit_id = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
     currentBuild.description = "Git hash: ${commit_id}"
-    deleteDir()
+    dir('out') {
+        deleteDir()
+    }
     def messages = []
     withCredentials([
             usernamePassword(credentialsId: 'github-access-for-jenkins-tests-token', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_PASSWORD')]) {
@@ -120,7 +122,7 @@ node('built-in') {
             def github_prs = getGitHubPRWithLabels(repository_owner, repository_name, env.GITHUB_PASSWORD, ['integration-tests', 'build-ondemand'])
             //def github_prs = getGitHubPRWithLabels(repository_owner, repository_name, env.GITHUB_PASSWORD, ['integration-tests'])
             //def github_prs = readJSON file: 'data.json'
-            writeJSON file: 'data.json', json: github_prs
+            writeJSON file: 'out/data.json', json: github_prs
             for (pr in github_prs) {
                 def job_name = "dip-on-github-pr/PR-${pr.number}"
                 def job = Jenkins.get().getItemByFullName(job_name)
@@ -194,7 +196,7 @@ node('built-in') {
                     }
                     job = null
                     last_build = null
-                    writeJSON file: "PR-${pr.number}-tm-events.json", json: tm_events
+                    writeJSON file: "out/PR-${pr.number}-tm-events.json", json: tm_events
                     if (skip_pr) {
                         println "Skip PR ${pr.number}"
                     } else {
@@ -203,8 +205,8 @@ node('built-in') {
                 }
             }
         } finally {
-            writeJSON file: "messages.json", json: messages
-            archiveArtifacts artifacts: '*.json', allowEmptyArchive: true
+            writeJSON file: "out/messages.json", json: messages
+            archiveArtifacts artifacts: 'out/**', allowEmptyArchive: true
         }
     }
 }
