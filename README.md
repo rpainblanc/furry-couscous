@@ -2,4 +2,4 @@
 - Dummy change
 - Another dummy change
 
-Lorem ipsum
+Lorem ipsum dolor sit amet
