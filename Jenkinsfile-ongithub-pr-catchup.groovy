@@ -4,8 +4,16 @@ import groovy.json.JsonSlurperClassic
 
 import java.time.OffsetDateTime
 
-def repository_owner = 'rpainblanc'
-def repository_name = 'furry-couscous'
+def repository_owner
+def repository_name
+def debug = false
+if (debug) {
+    repository_owner = 'rpainblanc'
+    repository_name = 'furry-couscous'
+} else {
+    repository_owner = 'dataiku'
+    repository_name = 'dip'
+}
 
 @NonCPS
 def getGitHubPRIssueEvents(String repository_owner, String repository_name, String github_token, def pr_number) {
