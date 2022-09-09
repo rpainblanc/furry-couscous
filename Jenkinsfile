@@ -1,6 +1,21 @@
-node('built-in') {
-    deleteDir()
-    sh 'printenv > printenv.txt | sort'
-    sleep 5
-    archiveArtifacts artifacts: '*.txt,*.json', allowEmptyArchive: true
+pipeline {
+    agent {
+        label 'built-in'
+    }
+    stages {
+        stage('init') {
+            steps {
+                script {
+                    def commit_id = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
+                    currentBuild.description = "Git hash: ${commit_id}"
+                    dir('out') {
+                        deleteDir()
+                    }
+                    sh 'printenv > out/printenv.txt | sort'
+                    sleep 5
+                    archiveArtifacts artifacts: 'out/**', allowEmptyArchive: true
+                }
+            }
+        }
+    }
 }
