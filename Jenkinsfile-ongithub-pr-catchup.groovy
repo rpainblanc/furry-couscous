@@ -105,7 +105,6 @@ def getGitHubPRWithLabels(String repository_owner, String repository_name, Strin
 }
 
 node('built-in') {
-    sh 'printenv | sort'
     deleteDir()
     def messages = []
     withCredentials([
