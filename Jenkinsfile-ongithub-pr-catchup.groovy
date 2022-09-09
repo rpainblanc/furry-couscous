@@ -104,6 +104,11 @@ def getGitHubPRWithLabels(String repository_owner, String repository_name, Strin
     return all_issues
 }
 
+def log_message(def messages, def message) {
+    messages.add(message)
+    println message
+}
+
 node('built-in') {
     deleteDir()
     def messages = []
@@ -121,14 +126,14 @@ node('built-in') {
 
                 if (!job) {
                     // There is no Jenkins job yet for this PR
-                    messages.add("There is no job yet for PR ${pr.number} (${pr.pull_request.url}), waiting for the GitHub plugin to create one soon")
+                    log_message(messages, "There is no job yet for PR ${pr.number} (${pr.pull_request.url}), waiting for the GitHub plugin to create one soon")
                     continue
                 }
                 if (job.buildable && !job.inQueue && !job.building) {
                     def last_build = job.lastCompletedBuild
                     if (!last_build)  {
                         // There is no build yet but the plugin should trigger one soon
-                        messages.add("Job exists for PR ${pr.number} (${pr.pull_request.url}) but no build exists yet, waiting for the GitHub plugin to trigger one soon")
+                        log_message(messages, "Job exists for PR ${pr.number} (${pr.pull_request.url}) but no build exists yet, waiting for the GitHub plugin to trigger one soon")
                         // Set all non-serializable objects to null before entering Jenkins step
                         job = null
                         last_build = null
@@ -168,7 +173,7 @@ node('built-in') {
                     for (event in tm_events_to_check) {
                         if (event.event == 'committed') {
                             // There is a commit more recent than the last execution time
-                            messages.add("A commit exists on PR ${pr.number} (${pr.pull_request.url}) which is more recent than the last build ${last_build.id}, waiting for the GitHub plugin to trigger a new one soon")
+                            log_message(messages, "A commit exists on PR ${pr.number} (${pr.pull_request.url}) which is more recent than the last build ${last_build.id}, waiting for the GitHub plugin to trigger a new one soon")
                             skip_pr = true
                             break
                         }
@@ -176,7 +181,7 @@ node('built-in') {
                         if (event.event == 'labeled') {
                             // Since we are already filtering PRs having the expected labels, we don't care which
                             // label was added (this label may even have been removed since), just that any label was added
-                            messages.add("A label was added on PR ${pr.number} (${pr.pull_request.url}) after the last build ${last_build.id} was executed, need to trigger a new build explicitly")
+                            log_message(messages, "A label was added on PR ${pr.number} (${pr.pull_request.url}) after the last build ${last_build.id} was executed, need to trigger a new build explicitly")
                             break
                         }
                         
