@@ -118,6 +118,8 @@ node('built-in') {
             for (pr in github_prs) {
                 def job_name = "dip-on-github-pr/PR-${pr.number}"
                 def job = Jenkins.get().getItemByFullName(job_name)
+                println "====\r\nPR ${pr.number} (${pr.pull_request.url})\r\n===="
+
                 if (!job) {
                     // There is no Jenkins job yet for this PR
                     messages.add("There is no job yet for PR ${pr.number} (${pr.pull_request.url}), waiting for the GitHub plugin to create one soon")
