@@ -152,7 +152,7 @@ pipeline {
                                     }
                                     //job.scheduleBuild(0, new hudson.model.Cause.UserIdCause("jenkins"))
                                     def tm_events = getGitHubPRIssueTimelineEvents(repository_owner, repository_name, env.GITHUB_PASSWORD, pr.number)
-                                    log_message(messages, "Job exists for PR ${pr.number} (${pr.pull_request.url}) and last build is id=${last_build.id}, last_exec=${last_build.startTimeInMillis}")
+                                    log_message(messages, "Job exists for PR ${pr.number} (${pr.pull_request.url}) and last build is ${last_build.id} (${last_build.url}, startTime=${last_build.startTimeInMillis})")
                                     // Scan the timeline events received **after** the last build start time
                                     def tm_events_to_check = []
                                     for (event in tm_events) {
@@ -174,10 +174,10 @@ pipeline {
                                         def date_millis = OffsetDateTime.parse(date).toEpochSecond() * 1000
                                         if (date_millis < last_build.startTimeInMillis) {
                                             // Event before last execution time    
-                                            println "Event ${event.event} (URL=${event.url}, ${event_details}): date ${date_millis} is before last build time ${last_build.startTimeInMillis}"
+                                            println "Event ${event.event} (URL=${event.url}, ${event_details}) is before last build"
                                             continue
                                         }
-                                        println "Event ${event.event} (URL=${event.url}, ${event_details}): date ${date_millis} is after last build time ${last_build.startTimeInMillis}"
+                                        println "Event ${event.event} (URL=${event.url}, ${event_details}) is  last build"
                                         tm_events_to_check.add(event)
                                     }
 
@@ -185,7 +185,7 @@ pipeline {
                                     for (event in tm_events_to_check) {
                                         if (event.event == 'committed') {
                                             // There is a commit more recent than the last execution time
-                                            log_message(messages, "A commit exists on PR ${pr.number} (${pr.pull_request.url}) which is more recent than the last build ${last_build.id}, waiting for the GitHub plugin to trigger a new one soon")
+                                            log_message(messages, "A commit exists on PR ${pr.number} (${pr.pull_request.url}) which is more recent than the last build, waiting for the GitHub plugin to trigger a new one soon")
                                             // No need to scan further
                                             break
                                         }
@@ -193,14 +193,14 @@ pipeline {
                                         if (event.event == 'labeled') {
                                             // Since we are already filtering PRs having the expected labels, we don't care which
                                             // label was added (this label may even have been removed since), just that any label was added
-                                            log_message(messages, "A label was added on PR ${pr.number} (${pr.pull_request.url}) after the last build ${last_build.id} was executed, need to trigger a new build explicitly")
+                                            log_message(messages, "A label was added on PR ${pr.number} (${pr.pull_request.url}) after the last build, need to trigger a new build explicitly")
                                             skip_pr = false
                                             continue
                                         }
                                         
                                         if (event.event == 'commented') {
                                             // TODO Check comment content is actually a builder template
-                                            log_message(messages, "A comment was added on PR ${pr.number} (${pr.pull_request.url}) after the last build ${last_build.id} was executed, need to trigger a new build explicitly")
+                                            log_message(messages, "A comment was added on PR ${pr.number} (${pr.pull_request.url}) after the last build, need to trigger a new build explicitly")
                                             skip_pr = false
                                             continue
                                         }
