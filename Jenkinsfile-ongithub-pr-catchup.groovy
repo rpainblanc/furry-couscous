@@ -140,19 +140,25 @@ pipeline {
                                 }
                                 if (!job.buildable) {
                                     println "Jenkins job is not buildable, skip PR"
+                                    // Set all non-serializable objects to null before moving on next step
+                                    job = null
                                     continue
                                 } else if (job.inQueue) {
                                     println "Jenkins job is already in the queue, skip PR"
+                                    // Set all non-serializable objects to null before moving on next step
+                                    job = null
                                     continue
                                 } else if (job.building) {
                                     println "Jenkins job is already building, skip PR"
+                                    // Set all non-serializable objects to null before moving on next step
+                                    job = null
                                     continue
                                 } else {
                                     def last_build = job.lastCompletedBuild
                                     if (!last_build)  {
                                         // There is no build yet but the plugin should trigger one soon
                                         println "Jenkins job exists for this PR but no build was executed yet, will be executed by the GitHub plugin, skip PR"
-                                        // Set all non-serializable objects to null before entering Jenkins step
+                                        // Set all non-serializable objects to null before moving on next step
                                         job = null
                                         last_build = null
                                         continue
@@ -209,6 +215,7 @@ pipeline {
                                             continue
                                         }
                                     }
+                                    // Set all non-serializable objects to null before moving on next step
                                     job = null
                                     last_build = null
                                     if (skip_pr) {
