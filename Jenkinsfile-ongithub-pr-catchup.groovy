@@ -128,6 +128,7 @@ pipeline {
                         try {
                             def github_prs = getGitHubPRWithLabels(repository_owner, repository_name, env.GITHUB_PASSWORD, ['integration-tests', 'build-ondemand'])
                             writeJSON file: 'github-prs.json', json: github_prs
+                            def slack_messages = []
                             for (pr in github_prs) {
                                 def job_name = "dip-on-github-pr/PR-${pr.number}"
                                 def job = Jenkins.get().getItemByFullName(job_name)
@@ -191,10 +192,12 @@ pipeline {
                                     println("After filtering on last build start time, found a total of ${tm_events_to_check.size()} events to check")
 
                                     def skip_pr = true
+                                    def reason = ""
                                     for (event in tm_events_to_check) {
                                         if (event.event == 'committed') {
                                             // There is a commit more recent than the last execution time
                                             println("Commit ${event.sha} (${event.url}) was added after last build, waiting for the GitHub plugin to trigger a new one soon, skip scanning further events")
+                                            reason += "- Commit ${event.sha} was added.\r\n"
                                             // No need to scan further
                                             break
                                         }
@@ -202,14 +205,16 @@ pipeline {
                                         if (event.event == 'labeled') {
                                             // Since we are already filtering PRs having the expected labels, we don't care which
                                             // label was added (this label may even have been removed since), just that any label was added
-                                            println("Label ${event.label.name} was added after last build, need to trigger a new build explicitly")
+                                            println("Label ${event.label.name} was added after last build")
+                                            reason += "- Label ${event.label.name} was added.\r\n"
                                             skip_pr = false
                                             continue
                                         }
                                         
                                         if (event.event == 'commented') {
                                             // TODO Check comment content is actually a builder template
-                                            println("Comment ${event.id} (${event.url}) was added after last build, need to trigger a new build explicitly")
+                                            println("Comment ${event.id} (${event.url}) was added after last build")
+                                            reason += "- Comment (${event.id}) was added.\r\n"
                                             skip_pr = false
                                             continue
                                         }
@@ -219,12 +224,18 @@ pipeline {
                                     last_build = null
                                     writeJSON file: "PR-${pr.number}-tm-events.json", json: tm_events
                                     if (skip_pr) {
-                                        println("Nothing to do, skip PR")
+                                        println("Nothing to do here, GitHub plugin should work automatically, skip PR")
                                     } else {
-                                        println("Should trigger PR explicitly")
+                                        println("Should trigger PR explicitly because:\r\n${reason}")
+                                        slack_messages.add("Should trigger explicitly a build for PR ${pr.number} (${pr.html_url}) because:\r\n${reason}")
                                         //job.scheduleBuild(0, new hudson.model.Cause.UserIdCause("jenkins"))
                                     }
                                 }
+                            }
+                            if (slack_messages) {
+                                def message = slack_messages.join("\r\n")
+                                println("Sending Slack message: ${message}")
+                                slackSend channel: "@regis.painblanc", message: message
                             }
                         } finally {
                             archiveArtifacts artifacts: '*.json', allowEmptyArchive: true
