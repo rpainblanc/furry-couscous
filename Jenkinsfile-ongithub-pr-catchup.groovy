@@ -165,7 +165,6 @@ pipeline {
                                     }
                                     println "Jenkins job is ${env.JENKINS_URL}${job_name}"
                                     def tm_events = getGitHubPRIssueTimelineEvents(repository_owner, repository_name, env.GITHUB_PASSWORD, pr.number)
-                                    writeJSON file: "PR-${pr.number}-tm-events.json", json: tm_events
                                     println "Found a total of ${tm_events.length()} events in the timeline"
 
                                     // Scan the timeline events received **after** the last build start time
@@ -218,6 +217,7 @@ pipeline {
                                     // Set all non-serializable objects to null before moving on next step
                                     job = null
                                     last_build = null
+                                    writeJSON file: "PR-${pr.number}-tm-events.json", json: tm_events
                                     if (skip_pr) {
                                         println "Nothing to do, skip PR"
                                     } else {
