@@ -228,7 +228,7 @@ pipeline {
                                         println("Nothing to do for this PR (GitHub plugin should work automatically) because:\n${reason}")
                                     } else {
                                         println("Should trigger this PR explicitly because:\n${reason}")
-                                        def text = "Jenkins job should be triggered explicitly for this <${pr.html_url}|*GitHub PR*> because:\n${reason}\nJenkins job is: ${job_url}"
+                                        def text = "Jenkins job should be triggered explicitly for this <${pr.html_url}|*PR ${pr.number}*> because:\n${reason}\nHere is the <${job_url}|Jenkins job>"
                                         slack_blocks.add(['type': 'section', 'text': ['type': 'mrkdwn', 'text': text]])
                                         slack_blocks.add(['type': 'divider'])
                                         slack_prs.add(pr.number)
