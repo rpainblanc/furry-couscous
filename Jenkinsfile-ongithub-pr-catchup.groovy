@@ -197,14 +197,14 @@ pipeline {
                                         if (event.event == 'labeled') {
                                             // Since we are already filtering PRs having the expected labels, we don't care which
                                             // label was added (this label may even have been removed since), just that any label was added
-                                            println "Label ${event.label.name} was added after last build, need to trigger a new build explicitly")
+                                            println "Label ${event.label.name} was added after last build, need to trigger a new build explicitly"
                                             skip_pr = false
                                             continue
                                         }
                                         
                                         if (event.event == 'commented') {
                                             // TODO Check comment content is actually a builder template
-                                            println "Comment ${event.id} (${event.url}) was added after last build, need to trigger a new build explicitly")
+                                            println "Comment ${event.id} (${event.url}) was added after last build, need to trigger a new build explicitly"
                                             skip_pr = false
                                             continue
                                         }
