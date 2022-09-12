@@ -130,7 +130,7 @@ pipeline {
                     currentBuild.description = "Git hash: ${commit_id}"
                     def messages = []
                     withCredentials([
-                            usernamePassword(credentialsId: 'github-access-for-jenkins-tests-token', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_PASSWORD')]) {
+                            usernamePassword(credentialsId: 'jenkins-dataiku', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_PASSWORD')]) {
                         try {
                             def github_prs = getGitHubPRWithLabels(repository_owner, repository_name, env.GITHUB_PASSWORD, ['integration-tests', 'build-ondemand'])
                             //def github_prs = getGitHubPRWithLabels(repository_owner, repository_name, env.GITHUB_PASSWORD, ['integration-tests'])
