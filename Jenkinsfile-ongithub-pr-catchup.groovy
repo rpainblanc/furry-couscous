@@ -3,6 +3,8 @@ import groovy.json.JsonOutput
 import groovy.json.JsonSlurperClassic
 
 import java.time.OffsetDateTime
+import java.util.regex.Matcher
+import java.util.regex.Pattern
 
 def repository_owner
 def repository_name
