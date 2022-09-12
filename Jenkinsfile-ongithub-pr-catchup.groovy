@@ -166,7 +166,6 @@ pipeline {
                                     }
                                     println("Jenkins job is ${env.JENKINS_URL}job/dip-on-github-pr/job/PR-${pr.number}")
                                     def tm_events = getGitHubPRIssueTimelineEvents(repository_owner, repository_name, env.GITHUB_PASSWORD, pr.number)
-                                    println("Found a total of ${tm_events.size()} events in the timeline")
 
                                     // Scan the timeline events received **after** the last build start time
                                     def tm_events_to_check = []
@@ -189,14 +188,13 @@ pipeline {
                                         }
                                         tm_events_to_check.add(event)
                                     }
-                                    println("After filtering on last build start time, found a total of ${tm_events_to_check.size()} events to check")
 
                                     def skip_pr = true
                                     def reason = ""
                                     for (event in tm_events_to_check) {
                                         if (event.event == 'committed') {
                                             // There is a commit more recent than the last execution time
-                                            println("Commit ${event.sha} (${event.url}) was added after last build, waiting for the GitHub plugin to trigger a new one soon, skip scanning further events")
+                                            println("Commit ${event.sha} (${event.html_url}) was added, waiting for the GitHub plugin to trigger a new one soon, skip scanning further events")
                                             reason += "- Commit ${event.sha} was added.\r\n"
                                             // No need to scan further
                                             break
@@ -205,7 +203,7 @@ pipeline {
                                         if (event.event == 'labeled') {
                                             // Since we are already filtering PRs having the expected labels, we don't care which
                                             // label was added (this label may even have been removed since), just that any label was added
-                                            println("Label ${event.label.name} was added after last build")
+                                            println("Label ${event.label.name} was added")
                                             reason += "- Label ${event.label.name} was added.\r\n"
                                             skip_pr = false
                                             continue
@@ -213,7 +211,7 @@ pipeline {
                                         
                                         if (event.event == 'commented') {
                                             // TODO Check comment content is actually a builder template
-                                            println("Comment ${event.id} (${event.url}) was added after last build")
+                                            println("Comment ${event.id} (${event.html_url})")
                                             reason += "- Comment (${event.id}) was added.\r\n"
                                             skip_pr = false
                                             continue
