@@ -130,6 +130,7 @@ pipeline {
                             def slack_messages = []
                             for (pr in github_prs) {
                                 def job_name = "dip-on-github-pr/PR-${pr.number}"
+                                def job_url = "${env.JENKINS_URL}job/dip-on-github-pr/job/PR-${pr.number}"
                                 def job = Jenkins.get().getItemByFullName(job_name)
                                 println("====\r\nPR ${pr.number} (${pr.html_url})\r\n====")
 
@@ -163,7 +164,6 @@ pipeline {
                                         last_build = null
                                         continue
                                     }
-                                    println("Jenkins job is ${env.JENKINS_URL}job/dip-on-github-pr/job/PR-${pr.number}")
                                     def tm_events = getGitHubPRIssueTimelineEvents(repository_owner, repository_name, env.GITHUB_PASSWORD, pr.number)
 
                                     // Scan the timeline events received **after** the last build start time
@@ -193,21 +193,22 @@ pipeline {
                                     for (event in tm_events_to_check) {
                                         if (event.event == 'committed') {
                                             // There is a commit more recent than the last execution time
-                                            reason += "- Commit ${event.sha} added, should be triggered by GitHub plugin.\r\n"
+                                            reason += "- Commit ${event.sha} was added, should be triggered by GitHub plugin.\r\n"
                                             continue
                                         }
                                         
                                         if (event.event == 'labeled') {
                                             // Since we are already filtering PRs having the expected labels, we don't care which
                                             // label was added (this label may even have been removed since), just that any label was added
-                                            reason += "- Label ${event.label.name} added.\r\n"
+                                            reason += "- Label ${event.label.name} was added.\r\n"
                                             skip_pr = false
                                             continue
                                         }
                                         
                                         if (event.event == 'commented') {
                                             // TODO Check comment content is actually a builder template
-                                            reason += "- Comment ${event.id} (${event.html_url}) added.\r\n"
+                                            // For now, only check that comment starts with "@jenkins-dataiku"
+                                            reason += "- Comment ${event.id} (${event.html_url}) was added.\r\n"
                                             skip_pr = false
                                             continue
                                         }
@@ -215,15 +216,12 @@ pipeline {
                                     // Set all non-serializable objects to null before moving on next step
                                     job = null
                                     last_build = null
-                                    if (reason) {
-                                        println(reason)
-                                    }
                                     writeJSON file: "PR-${pr.number}-tm-events.json", json: tm_events
                                     if (skip_pr) {
-                                        println("Nothing to do here, GitHub plugin should work automatically, skip PR")
+                                        println("Nothing to do for this PR (GitHub plugin should work automatically) because:\r\n${reason}")
                                     } else {
-                                        println("Should trigger PR explicitly because:\r\n${reason}")
-                                        slack_messages.add("Should trigger explicitly a build for PR ${pr.number} (${pr.html_url}) because:\r\n${reason}")
+                                        println("Should trigger this PR explicitly because:\r\n${reason}")
+                                        slack_messages.add("Should trigger explicitly a build for PR ${pr.html_url} because:\r\n${reason}\r\nJenkins job is: ${job_url}")
                                         //job.scheduleBuild(0, new hudson.model.Cause.UserIdCause("jenkins"))
                                     }
                                 }
@@ -231,7 +229,7 @@ pipeline {
                             if (slack_messages) {
                                 currentBuild.description = "${slack_messages.size()} PRs need to be explicitly triggered"
                                 def message = slack_messages.join("\r\n")
-                                println("Sending Slack message: ${message}")
+                                println("Sending Slack message:\r\n${message}")
                                 slackSend channel: "@regis.painblanc", message: message
                             }
                         } finally {
