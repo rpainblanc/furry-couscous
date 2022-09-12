@@ -209,7 +209,7 @@ pipeline {
                                         if (event.event == 'commented') {
                                             // TODO Check comment content is actually a builder template
                                             // For now, only check that comment starts with "@jenkins-dataiku"
-                                            reason += "• Comment `${event.id}` (${event.html_url}) was added.\n"
+                                            reason += "• Comment <${event.html_url}|`${event.id}`> was added.\n"
                                             skip_pr = false
                                             continue
                                         }
@@ -222,7 +222,7 @@ pipeline {
                                         println("Nothing to do for this PR (GitHub plugin should work automatically) because:\n${reason}")
                                     } else {
                                         println("Should trigger this PR explicitly because:\n${reason}")
-                                        slack_messages.add("Should trigger explicitly a build for PR ${pr.html_url} because:\n${reason}\nJenkins job is: ${job_url}")
+                                        slack_messages.add("Jenkins job should be triggered explicitly for this <${pr.html_url}|*GitHub PR*> because:\n${reason}\nHere is <${job_url}|the Jenkins job>")
                                         def text = "Should trigger explicitly a build for PR ${pr.html_url} because:\n${reason}\nJenkins job is: ${job_url}"
                                         slack_blocks.add(['type': 'section', 'text': ['type': 'mrkdwn', 'text': text]])
                                         slack_blocks.add(['type': 'divider'])
