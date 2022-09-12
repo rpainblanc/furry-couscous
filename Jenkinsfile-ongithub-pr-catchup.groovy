@@ -122,7 +122,6 @@ pipeline {
                 script {
                     sh 'git reset --hard && git clean -xfdf'
                     def commit_id = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
-                    currentBuild.description = "Git hash: ${commit_id}"
                     withCredentials([
                             usernamePassword(credentialsId: 'jenkins-dataiku', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_PASSWORD')]) {
                         try {
@@ -194,25 +193,21 @@ pipeline {
                                     for (event in tm_events_to_check) {
                                         if (event.event == 'committed') {
                                             // There is a commit more recent than the last execution time
-                                            println("Commit ${event.sha} (${event.html_url}) was added, waiting for the GitHub plugin to trigger a new one soon, skip scanning further events")
-                                            reason += "- Commit ${event.sha} was added.\r\n"
-                                            // No need to scan further
-                                            break
+                                            reason += "- Commit ${event.sha} added, should be triggered by GitHub plugin.\r\n"
+                                            continue
                                         }
                                         
                                         if (event.event == 'labeled') {
                                             // Since we are already filtering PRs having the expected labels, we don't care which
                                             // label was added (this label may even have been removed since), just that any label was added
-                                            println("Label ${event.label.name} was added")
-                                            reason += "- Label ${event.label.name} was added.\r\n"
+                                            reason += "- Label ${event.label.name} added.\r\n"
                                             skip_pr = false
                                             continue
                                         }
                                         
                                         if (event.event == 'commented') {
                                             // TODO Check comment content is actually a builder template
-                                            println("Comment ${event.id} (${event.html_url})")
-                                            reason += "- Comment (${event.id}) was added.\r\n"
+                                            reason += "- Comment ${event.id} (${event.html_url}) added.\r\n"
                                             skip_pr = false
                                             continue
                                         }
@@ -220,6 +215,9 @@ pipeline {
                                     // Set all non-serializable objects to null before moving on next step
                                     job = null
                                     last_build = null
+                                    if (reason) {
+                                        println(reason)
+                                    }
                                     writeJSON file: "PR-${pr.number}-tm-events.json", json: tm_events
                                     if (skip_pr) {
                                         println("Nothing to do here, GitHub plugin should work automatically, skip PR")
@@ -231,6 +229,7 @@ pipeline {
                                 }
                             }
                             if (slack_messages) {
+                                currentBuild.description = "${slack_messages.size()} PRs need to be explicitly triggered"
                                 def message = slack_messages.join("\r\n")
                                 println("Sending Slack message: ${message}")
                                 slackSend channel: "@regis.painblanc", message: message
