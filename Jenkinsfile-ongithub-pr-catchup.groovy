@@ -131,25 +131,25 @@ pipeline {
                             for (pr in github_prs) {
                                 def job_name = "dip-on-github-pr/PR-${pr.number}"
                                 def job = Jenkins.get().getItemByFullName(job_name)
-                                println "====\r\nPR ${pr.number} (${pr.pull_request.url})\r\n===="
+                                println("====\r\nPR ${pr.number} (${pr.html_url})\r\n====")
 
                                 if (!job) {
                                     // There is no Jenkins job yet for this PR
-                                    println "There is no Jenkins job yet for this PR, will be created by the GitHub plugin, skip PR"
+                                    println("There is no Jenkins job yet for this PR, will be created by the GitHub plugin, skip PR")
                                     continue
                                 }
                                 if (!job.buildable) {
-                                    println "Jenkins job is not buildable, skip PR"
+                                    println("Jenkins job is not buildable, skip PR")
                                     // Set all non-serializable objects to null before moving on next step
                                     job = null
                                     continue
                                 } else if (job.inQueue) {
-                                    println "Jenkins job is already in the queue, skip PR"
+                                    println("Jenkins job is already in the queue, skip PR")
                                     // Set all non-serializable objects to null before moving on next step
                                     job = null
                                     continue
                                 } else if (job.building) {
-                                    println "Jenkins job is already building, skip PR"
+                                    println("Jenkins job is already building, skip PR")
                                     // Set all non-serializable objects to null before moving on next step
                                     job = null
                                     continue
@@ -157,15 +157,15 @@ pipeline {
                                     def last_build = job.lastCompletedBuild
                                     if (!last_build)  {
                                         // There is no build yet but the plugin should trigger one soon
-                                        println "Jenkins job exists for this PR but no build was executed yet, will be executed by the GitHub plugin, skip PR"
+                                        println("Jenkins job exists for this PR but no build was executed yet, will be executed by the GitHub plugin, skip PR")
                                         // Set all non-serializable objects to null before moving on next step
                                         job = null
                                         last_build = null
                                         continue
                                     }
-                                    println "Jenkins job is ${env.JENKINS_URL}${job_name}"
+                                    println("Jenkins job is ${env.JENKINS_URL}job/dip-on-github-pr/job/PR-${pr.number}")
                                     def tm_events = getGitHubPRIssueTimelineEvents(repository_owner, repository_name, env.GITHUB_PASSWORD, pr.number)
-                                    println "Found a total of ${tm_events.size()} events in the timeline"
+                                    println("Found a total of ${tm_events.size()} events in the timeline")
 
                                     // Scan the timeline events received **after** the last build start time
                                     def tm_events_to_check = []
@@ -188,13 +188,13 @@ pipeline {
                                         }
                                         tm_events_to_check.add(event)
                                     }
-                                    println "After filtering on last build start time, found a total of ${tm_events_to_check.size()} events to check"
+                                    println("After filtering on last build start time, found a total of ${tm_events_to_check.size()} events to check")
 
                                     def skip_pr = true
                                     for (event in tm_events_to_check) {
                                         if (event.event == 'committed') {
                                             // There is a commit more recent than the last execution time
-                                            println "Commit ${event.sha} (${event.url}) was added after last build, waiting for the GitHub plugin to trigger a new one soon, skip scanning further events"
+                                            println("Commit ${event.sha} (${event.url}) was added after last build, waiting for the GitHub plugin to trigger a new one soon, skip scanning further events")
                                             // No need to scan further
                                             break
                                         }
@@ -202,14 +202,14 @@ pipeline {
                                         if (event.event == 'labeled') {
                                             // Since we are already filtering PRs having the expected labels, we don't care which
                                             // label was added (this label may even have been removed since), just that any label was added
-                                            println "Label ${event.label.name} was added after last build, need to trigger a new build explicitly"
+                                            println("Label ${event.label.name} was added after last build, need to trigger a new build explicitly")
                                             skip_pr = false
                                             continue
                                         }
                                         
                                         if (event.event == 'commented') {
                                             // TODO Check comment content is actually a builder template
-                                            println "Comment ${event.id} (${event.url}) was added after last build, need to trigger a new build explicitly"
+                                            println("Comment ${event.id} (${event.url}) was added after last build, need to trigger a new build explicitly")
                                             skip_pr = false
                                             continue
                                         }
@@ -219,9 +219,9 @@ pipeline {
                                     last_build = null
                                     writeJSON file: "PR-${pr.number}-tm-events.json", json: tm_events
                                     if (skip_pr) {
-                                        println "Nothing to do, skip PR"
+                                        println("Nothing to do, skip PR")
                                     } else {
-                                        println "Should trigger PR explicitly"
+                                        println("Should trigger PR explicitly")
                                         //job.scheduleBuild(0, new hudson.model.Cause.UserIdCause("jenkins"))
                                     }
                                 }
