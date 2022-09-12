@@ -189,7 +189,7 @@ pipeline {
                                     for (event in tm_events_to_check) {
                                         if (event.event == 'committed') {
                                             // There is a commit more recent than the last execution time
-                                            println "Commit ${event.sha} (${event.url}) was added after last build, waiting for the GitHub plugin to trigger a new one soon, skip scanning further events")
+                                            println "Commit ${event.sha} (${event.url}) was added after last build, waiting for the GitHub plugin to trigger a new one soon, skip scanning further events"
                                             // No need to scan further
                                             break
                                         }
