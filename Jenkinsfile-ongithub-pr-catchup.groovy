@@ -128,7 +128,7 @@ pipeline {
                             def github_prs = getGitHubPRWithLabels(repository_owner, repository_name, env.GITHUB_PASSWORD, ['integration-tests', 'build-ondemand'])
                             writeJSON file: 'github-prs.json', json: github_prs
                             def slack_blocks = []
-                            def slack_messages = []
+                            def slack_prs = []
                             for (pr in github_prs) {
                                 def job_name = "dip-on-github-pr/PR-${pr.number}"
                                 def job_url = "${env.JENKINS_URL}job/dip-on-github-pr/job/PR-${pr.number}"
@@ -209,8 +209,12 @@ pipeline {
                                         if (event.event == 'commented') {
                                             // TODO Check comment content is actually a builder template
                                             // For now, only check that comment starts with "@jenkins-dataiku"
-                                            reason += "• Comment <${event.html_url}|`${event.id}`> was added.\n"
-                                            skip_pr = false
+                                            def matcher = Pattern.compile(/\A@jenkins-dataiku\s*\r\n(```|~~~)(json)?\r\n(?<BUILDERCONF>\{.+\})\r\n\1.*\Z/, Pattern.DOTALL).matcher()
+                                            if (matcher.matches()) {
+                                                reason += "• Comment <${event.html_url}|`${event.id}`> was added.\n"
+                                                skip_pr = false
+                                            }
+                                            matcher = null
                                             continue
                                         }
                                     }
@@ -222,19 +226,16 @@ pipeline {
                                         println("Nothing to do for this PR (GitHub plugin should work automatically) because:\n${reason}")
                                     } else {
                                         println("Should trigger this PR explicitly because:\n${reason}")
-                                        slack_messages.add("Jenkins job should be triggered explicitly for this <${pr.html_url}|*GitHub PR*> because:\n${reason}\nHere is <${job_url}|the Jenkins job>")
-                                        def text = "Should trigger explicitly a build for PR ${pr.html_url} because:\n${reason}\nJenkins job is: ${job_url}"
+                                        def text = "Jenkins job should be triggered explicitly for this <${pr.html_url}|*GitHub PR*> because:\n${reason}\nJenkins job is: ${job_url}"
                                         slack_blocks.add(['type': 'section', 'text': ['type': 'mrkdwn', 'text': text]])
                                         slack_blocks.add(['type': 'divider'])
+                                        slack_prs.add(pr.number)
                                         //job.scheduleBuild(0, new hudson.model.Cause.UserIdCause("jenkins"))
                                     }
                                 }
                             }
-                            if (slack_messages) {
-                                currentBuild.description = "${slack_messages.size()} PRs need to be explicitly triggered"
-                                def message = slack_messages.join("\n")
-                                println("Sending Slack message:\n${message}")
-                                //slackSend channel: "@regis.painblanc", message: message
+                            if (slack_prs) {
+                                currentBuild.description = "There are ${slack_prs.size()} PRs waiting for execution"
                                 withCredentials([string(credentialsId: 'jenkins-slack', variable: 'JENKINS_SLACK')]) {
                                     def slack_send_result = local_send_slack(env.JENKINS_SLACK, '@regis.painblanc', "Some Jenkins jobs for GitHub PR must be triggered manually", slack_blocks)
                                     println("Slack send result: ${slack_send_result}")
