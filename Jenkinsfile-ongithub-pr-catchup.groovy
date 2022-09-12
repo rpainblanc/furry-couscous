@@ -211,7 +211,7 @@ pipeline {
                                         if (event.event == 'commented') {
                                             // TODO Check comment content is actually a builder template
                                             // For now, only check that comment starts with "@jenkins-dataiku"
-                                            def matcher = Pattern.compile(/\A@jenkins-dataiku\s*\r\n(```|~~~)(json)?\r\n(?<BUILDERCONF>\{.+\})\r\n\1.*\Z/, Pattern.DOTALL).matcher()
+                                            def matcher = Pattern.compile(/\A@jenkins-dataiku\s*\r\n(```|~~~)(json)?\r\n(?<BUILDERCONF>\{.+\})\r\n\1.*\Z/, Pattern.DOTALL).matcher(event.body as String)
                                             if (matcher.matches()) {
                                                 reason += "• Comment <${event.html_url}|`${event.id}`> was added.\n"
                                                 skip_pr = false
