@@ -165,7 +165,7 @@ pipeline {
                                     }
                                     println "Jenkins job is ${env.JENKINS_URL}${job_name}"
                                     def tm_events = getGitHubPRIssueTimelineEvents(repository_owner, repository_name, env.GITHUB_PASSWORD, pr.number)
-                                    println "Found a total of ${tm_events.length()} events in the timeline"
+                                    println "Found a total of ${tm_events.size()} events in the timeline"
 
                                     // Scan the timeline events received **after** the last build start time
                                     def tm_events_to_check = []
@@ -188,7 +188,7 @@ pipeline {
                                         }
                                         tm_events_to_check.add(event)
                                     }
-                                    println "After filtering on last build start time, found a total of ${tm_events_to_check.length()} events to check"
+                                    println "After filtering on last build start time, found a total of ${tm_events_to_check.size()} events to check"
 
                                     def skip_pr = true
                                     for (event in tm_events_to_check) {
