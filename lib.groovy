@@ -122,3 +122,5 @@ def sort_issue_comments_by_creation(def github_issue_comments) {
 def sort_issue_comments_by_update(def github_issue_comments) {
     github_issue_comments.sort { c1, c2 -> c1.updated_at <=> c2.updated_at }
 }
+
+return this
