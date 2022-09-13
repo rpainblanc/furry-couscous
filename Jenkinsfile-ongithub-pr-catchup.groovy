@@ -129,8 +129,8 @@ pipeline {
                         try {
                             def github_prs = getGitHubPRWithLabels(repository_owner, repository_name, env.GITHUB_PASSWORD, ['integration-tests', 'build-ondemand'])
                             writeJSON file: 'github-prs.json', json: github_prs
-                            def slack_blocks = []
                             def slack_prs = []
+                            def slack_prs_messages = []
                             def banner_sep = '=================================================================================='
                             for (pr in github_prs) {
                                 def job_name = "dip-on-github-pr/PR-${pr.number}"
@@ -240,7 +240,8 @@ pipeline {
                                         println("==> No need to trigger this PR explicitly because:\n${reason}")
                                     } else if (trigger_pr) {
                                         println("==> Should trigger job ${job_url} for this PR explicitly because:\n${reason}")
-                                        slack_prs.add("Job for PR ${pr.number} (${pr.html_url}) should be triggered explicitly because:\n${reason}\nLink to job is ${job_url}\n\n")
+                                        slack_prs_messages.add("Job for PR ${pr.number} (${pr.html_url}) should be triggered explicitly because:\n${reason}\nLink to job is ${job_url}\n\n")
+                                        slack_prs.add(pr)
                                         //job.scheduleBuild(0, new hudson.model.Cause.UserIdCause("jenkins"))
                                     } else {
                                         println("==> No need to trigger this PR explicitly because:\n${reason}")
@@ -248,8 +249,12 @@ pipeline {
                                 }
                             }
                             if (slack_prs) {
-                                currentBuild.description = "There are ${slack_prs.size()} PRs waiting for execution"
-                                println("${banner_sep}\n"+slack_prs.join("${banner_sep}\n"))
+                                def description = "<div>There are ${slack_prs.size()} PRs waiting for execution:</div>"
+                                for (pr in slack_prs) {
+                                    description += "<div>• <a href=\"${pr.html_url}/\">PR-${pr.number}</a></div>"
+                                }
+                                currentBuild.description = description
+                                println("${banner_sep}\n"+slack_prs_messages.join("${banner_sep}\n"))
                             }
                         } finally {
                             archiveArtifacts artifacts: '*.json', allowEmptyArchive: true
