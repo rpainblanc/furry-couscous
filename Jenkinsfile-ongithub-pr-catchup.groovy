@@ -195,6 +195,10 @@ pipeline {
                                         println("Retain to check event '${event.event}', it is after last build execution time: ${date_millis} > ${last_build.startTimeInMillis}")
                                         tm_events_to_check.add(event)
                                     }
+                                    if (!tm_events_to_check) {
+                                        println("There are no more events after last build execution time, skip PR")
+                                        continue
+                                    }
 
                                     def skip_pr = true
                                     def reason = ""
