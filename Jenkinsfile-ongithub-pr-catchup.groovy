@@ -237,11 +237,7 @@ pipeline {
                                     last_build = null
                                     writeJSON file: "PR-${pr.number}-tm-events.json", json: tm_events
                                     if (trigger_with_github_plugin) {
-                                        if (reason) {
-                                            println("==> No need to trigger this PR explicitly because:\n${reason}")
-                                        } else {
-                                            println("==> No need to trigger this PR explicitly because it should be triggered automatically by the GitHub plugin")
-                                        }
+                                        println("==> No need to trigger this PR explicitly because:\n${reason}")
                                     } else if (trigger_pr) {
                                         println("==> Should trigger job ${job_url} for this PR explicitly because:\n${reason}")
                                         slack_prs.add("Job for PR ${pr.number} (${pr.html_url}) should be triggered explicitly because:\n${reason}\nLink to job is ${job_url}\n\n")
