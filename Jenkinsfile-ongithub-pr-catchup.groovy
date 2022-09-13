@@ -134,7 +134,7 @@ pipeline {
                             def banner_sep = '=================================================================================='
                             for (pr in github_prs) {
                                 def job_name = "dip-on-github-pr/PR-${pr.number}"
-                                def job_url = "${env.JENKINS_URL}job/dip-on-github-pr/job/PR-${pr.number}"
+                                def job_url = "${env.JENKINS_URL}job/dip-on-github-pr/job/PR-${pr.number}/"
                                 def job = Jenkins.get().getItemByFullName(job_name)
                                 println("${banner_sep}\nPR ${pr.number} (${pr.html_url})\n${banner_sep}")
 
@@ -169,7 +169,7 @@ pipeline {
                                         continue
                                     }
                                     def tm_events = getGitHubPRIssueTimelineEvents(repository_owner, repository_name, env.GITHUB_PASSWORD, pr.number)
-                                    println("Last build for Jenkins job is ${last_build.id}: startTimeInMillis=${last_build.startTimeInMillis}")
+                                    println("Last build for Jenkins job is ${last_build.id} (${job_url}${last_build.id}/): startTimeInMillis=${last_build.startTimeInMillis}")
 
                                     // Scan the timeline events received **after** the last build start time
                                     def tm_events_to_check = []
@@ -214,8 +214,6 @@ pipeline {
                                         }
                                         
                                         if (event.event == 'commented') {
-                                            // TODO Check comment content is actually a builder template
-                                            // For now, only check that comment starts with "@jenkins-dataiku"
                                             def matcher = Pattern.compile(/\A@jenkins-dataiku\s*\r\n(```|~~~)(json)?\r\n(?<BUILDERCONF>\{.+\})\r\n\1.*\Z/, Pattern.DOTALL).matcher(event.body as String)
                                             if (matcher.matches()) {
                                                 reason += "• Comment ${event.html_url} was added.\n"
@@ -234,7 +232,7 @@ pipeline {
                                     if (skip_pr) {
                                         println("No need to trigger this PR explicitly because:\n${reason}")
                                     } else {
-                                        println("Should trigger this PR explicitly because:\n${reason}")
+                                        println("Should trigger job ${job_url} for this PR explicitly because:\n${reason}")
                                         slack_prs.add("Job for PR ${pr.number} (${pr.html_url}) should be triggered explicitly because:\n${reason}\nLink to job is ${job_url}\n")
                                         //job.scheduleBuild(0, new hudson.model.Cause.UserIdCause("jenkins"))
                                     }
@@ -252,26 +250,4 @@ pipeline {
             }
         }
     }
-}
-
-static def local_send_slack(def token, String channel, String summary, def blocks) {
-    def queryString = JsonOutput.toJson([
-            'username': 'Jenkins',
-            'channel' : channel,
-            'text'    : summary,
-            'blocks'  : blocks
-    ])
-    def url = new URL('https://slack.com/api/chat.postMessage')
-    def connection = url.openConnection()
-    connection.setRequestMethod("POST")
-    connection.setRequestProperty('Content-Type', 'application/json;charset=utf-8')
-    connection.setRequestProperty('Authorization', "Bearer ${token}")
-    connection.doOutput = true
-
-    def writer = new OutputStreamWriter(connection.outputStream)
-    writer.write(queryString)
-    writer.flush()
-    writer.close()
-    connection.connect()
-    return connection.content.text
 }
