@@ -200,12 +200,14 @@ pipeline {
                                         continue
                                     }
 
-                                    def skip_pr = true
+                                    def trigger_pr = false
+                                    def trigger_with_github_plugin = false
                                     def reason = ""
                                     for (event in tm_events_to_check) {
                                         if (event.event == 'committed') {
                                             // There is a commit more recent than the last execution time
                                             reason += "• Commit '${event.sha}' was added, should be triggered by GitHub plugin.\n"
+                                            trigger_with_github_plugin = true
                                             continue
                                         }
                                         
@@ -213,7 +215,7 @@ pipeline {
                                             // Since we are already filtering PRs having the expected labels, we don't care which
                                             // label was added (this label may even have been removed since), just that any label was added
                                             reason += "• Label '${event.label.name}' was added.\n"
-                                            skip_pr = false
+                                            trigger_pr = true
                                             continue
                                         }
                                         
@@ -221,8 +223,9 @@ pipeline {
                                             def matcher = Pattern.compile(/\A@jenkins-dataiku\s*\r\n(```|~~~)(json)?\r\n(?<BUILDERCONF>\{.+\})\r\n\s*\1.*\Z/, Pattern.DOTALL).matcher(event.body as String)
                                             if (matcher.matches()) {
                                                 reason += "• Comment ${event.html_url} was added.\n"
-                                                skip_pr = false
+                                                trigger_pr = true
                                             } else {
+                                                // This is not a valid comment to trigger a build
                                                 reason += "• Comment ${event.html_url} was added but does not contain a builder template.\n"
                                             }
                                             matcher = null
@@ -233,12 +236,14 @@ pipeline {
                                     job = null
                                     last_build = null
                                     writeJSON file: "PR-${pr.number}-tm-events.json", json: tm_events
-                                    if (skip_pr) {
-                                        println("No need to trigger this PR explicitly because:\n${reason}")
-                                    } else {
+                                    if (trigger_with_github_plugin) {
+                                        println("No need to trigger this PR explicitly because it should be triggered automatically by the GitHub plugin")
+                                    } else if (trigger_pr) {
                                         println("Should trigger job ${job_url} for this PR explicitly because:\n${reason}")
                                         slack_prs.add("Job for PR ${pr.number} (${pr.html_url}) should be triggered explicitly because:\n${reason}\nLink to job is ${job_url}\n\n")
                                         //job.scheduleBuild(0, new hudson.model.Cause.UserIdCause("jenkins"))
+                                    } else {
+                                        println("No need to trigger this PR explicitly because:\n${reason}")
                                     }
                                 }
                             }
