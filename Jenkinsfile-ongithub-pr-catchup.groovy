@@ -200,14 +200,14 @@ pipeline {
                                     for (event in tm_events_to_check) {
                                         if (event.event == 'committed') {
                                             // There is a commit more recent than the last execution time
-                                            reason += "• Commit `${event.sha}` was added, should be triggered by GitHub plugin.\n"
+                                            reason += "• Commit '${event.sha}' was added, should be triggered by GitHub plugin.\n"
                                             continue
                                         }
                                         
                                         if (event.event == 'labeled') {
                                             // Since we are already filtering PRs having the expected labels, we don't care which
                                             // label was added (this label may even have been removed since), just that any label was added
-                                            reason += "• Label `${event.label.name}` was added.\n"
+                                            reason += "• Label '${event.label.name}' was added.\n"
                                             skip_pr = false
                                             continue
                                         }
@@ -217,10 +217,10 @@ pipeline {
                                             // For now, only check that comment starts with "@jenkins-dataiku"
                                             def matcher = Pattern.compile(/\A@jenkins-dataiku\s*\r\n(```|~~~)(json)?\r\n(?<BUILDERCONF>\{.+\})\r\n\1.*\Z/, Pattern.DOTALL).matcher(event.body as String)
                                             if (matcher.matches()) {
-                                                reason += "• Comment <${event.html_url}|`${event.id}`> was added.\n"
+                                                reason += "• Comment ${event.html_url} was added.\n"
                                                 skip_pr = false
                                             } else {
-                                                reason += "• Comment <${event.html_url}|`${event.id}`> was added but does not contain a builder template.\n"
+                                                reason += "• Comment ${event.html_url} was added but does not contain a builder template.\n"
                                             }
                                             matcher = null
                                             continue
@@ -234,21 +234,14 @@ pipeline {
                                         println("No need to trigger this PR explicitly because:\n${reason}")
                                     } else {
                                         println("Should trigger this PR explicitly because:\n${reason}")
-                                        def text = "Jenkins job should be triggered explicitly for this <${pr.html_url}|*PR ${pr.number}*> because:\n${reason}\nHere is the <${job_url}|Jenkins job>"
-                                        slack_blocks.add(['type': 'section', 'text': ['type': 'mrkdwn', 'text': text]])
-                                        slack_blocks.add(['type': 'divider'])
-                                        slack_prs.add("Should trigger job for PR ${pr.html_url} because:\n${reason}")
+                                        slack_prs.add("Should trigger explicitly job for PR ${pr.html_url} because:\n${reason}\nJob link is ${job_url}")
                                         //job.scheduleBuild(0, new hudson.model.Cause.UserIdCause("jenkins"))
                                     }
                                 }
                             }
                             if (slack_prs) {
                                 currentBuild.description = "There are ${slack_prs.size()} PRs waiting for execution"
-                                withCredentials([string(credentialsId: 'jenkins-slack', variable: 'JENKINS_SLACK')]) {
-                                    def slack_send_result = local_send_slack(env.JENKINS_SLACK, '@regis.painblanc', "Some Jenkins jobs for GitHub PR must be triggered manually", slack_blocks)
-                                    println("Slack send result: ${slack_send_result}")
-                                    println("Summary:\n======\n"+slack_prs.join("======\n"))
-                                }
+                                println("Summary:\n======\n"+slack_prs.join("======\n"))
                             }
                         } finally {
                             archiveArtifacts artifacts: '*.json', allowEmptyArchive: true
