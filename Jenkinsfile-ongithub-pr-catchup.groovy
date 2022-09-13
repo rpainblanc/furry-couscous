@@ -249,6 +249,7 @@ pipeline {
                             }
                             if (slack_prs) {
                                 currentBuild.description = "There are ${slack_prs.size()} PRs waiting for execution"
+                                println("${banner_sep}\nSummary\n${banner_sep}")
                                 println("${banner_sep}\n"+slack_prs.join("${banner_sep}\n"))
                             }
                         } finally {
