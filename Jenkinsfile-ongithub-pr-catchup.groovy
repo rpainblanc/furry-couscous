@@ -237,7 +237,7 @@ pipeline {
                                         println("No need to trigger this PR explicitly because:\n${reason}")
                                     } else {
                                         println("Should trigger job ${job_url} for this PR explicitly because:\n${reason}")
-                                        slack_prs.add("=> Job for PR ${pr.number} (${pr.html_url}) should be triggered explicitly because:\n${reason}\nLink to job is ${job_url}\n\n")
+                                        slack_prs.add("Job for PR ${pr.number} (${pr.html_url}) should be triggered explicitly because:\n${reason}\nLink to job is ${job_url}\n\n")
                                         //job.scheduleBuild(0, new hudson.model.Cause.UserIdCause("jenkins"))
                                     }
                                 }
