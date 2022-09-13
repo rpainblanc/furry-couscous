@@ -131,7 +131,7 @@ pipeline {
                             writeJSON file: 'github-prs.json', json: github_prs
                             def slack_blocks = []
                             def slack_prs = []
-                            def banner_sep = '=================================================='
+                            def banner_sep = '=================================================================================='
                             for (pr in github_prs) {
                                 def job_name = "dip-on-github-pr/PR-${pr.number}"
                                 def job_url = "${env.JENKINS_URL}job/dip-on-github-pr/job/PR-${pr.number}"
@@ -235,14 +235,14 @@ pipeline {
                                         println("No need to trigger this PR explicitly because:\n${reason}")
                                     } else {
                                         println("Should trigger this PR explicitly because:\n${reason}")
-                                        slack_prs.add("${pr.number} Should trigger explicitly job for PR ${pr.html_url} because:\n${reason}\nLink to job is ${job_url}\n")
+                                        slack_prs.add("Job for PR ${pr.number} (${pr.html_url}) should be triggered explicitly because:\n${reason}\nLink to job is ${job_url}\n")
                                         //job.scheduleBuild(0, new hudson.model.Cause.UserIdCause("jenkins"))
                                     }
                                 }
                             }
                             if (slack_prs) {
                                 currentBuild.description = "There are ${slack_prs.size()} PRs waiting for execution"
-                                println("Summary:\n${banner_sep}\n"+slack_prs.join("${banner_sep}\n"))
+                                println("${banner_sep}\n"+slack_prs.join("${banner_sep}\n"))
                             }
                         } finally {
                             archiveArtifacts artifacts: '*.json', allowEmptyArchive: true
