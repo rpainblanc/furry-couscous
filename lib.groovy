@@ -6,7 +6,7 @@ import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 def static getBuilderTemplateGithubRegex() {
-    return /\A@jenkins-dataiku\s*\r\n(```|~~~)(json)?\r\n(?<BUILDERCONF>\{.+\})\r\n\1.*\Z/
+    return '\A@jenkins-dataiku\s*\r\n(```|~~~)(json)?\r\n(?<BUILDERCONF>\{.+\})\r\n\1.*\Z'
 }
 
 @NonCPS
