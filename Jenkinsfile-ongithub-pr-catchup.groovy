@@ -168,6 +168,7 @@ pipeline {
                                         continue
                                     }
                                     def tm_events = getGitHubPRIssueTimelineEvents(repository_owner, repository_name, env.GITHUB_PASSWORD, pr.number)
+                                    println("Last build for Jenkins job is ${last_build.id}: startTimeInMillis=${last_build.startTimeInMillis}")
 
                                     // Scan the timeline events received **after** the last build start time
                                     def tm_events_to_check = []
@@ -181,11 +182,13 @@ pipeline {
                                             date = event.created_at
                                         } else {
                                             // Not interesting event
+                                            println("Ignore event ${event.event}")
                                             continue
                                         }
                                         def date_millis = OffsetDateTime.parse(date).toEpochSecond() * 1000
                                         if (date_millis < last_build.startTimeInMillis) {
                                             // Event before last execution time    
+                                            println("Ignore event ${event.event}, it is before last build execution time: ${date_millis} < ${last_build.startTimeInMillis}")
                                             continue
                                         }
                                         tm_events_to_check.add(event)
@@ -233,7 +236,7 @@ pipeline {
                                         def text = "Jenkins job should be triggered explicitly for this <${pr.html_url}|*PR ${pr.number}*> because:\n${reason}\nHere is the <${job_url}|Jenkins job>"
                                         slack_blocks.add(['type': 'section', 'text': ['type': 'mrkdwn', 'text': text]])
                                         slack_blocks.add(['type': 'divider'])
-                                        slack_prs.add("PR ${pr.html_url} because:\n${reason}")
+                                        slack_prs.add("Should trigger job for PR ${pr.html_url} because:\n${reason}")
                                         //job.scheduleBuild(0, new hudson.model.Cause.UserIdCause("jenkins"))
                                     }
                                 }
