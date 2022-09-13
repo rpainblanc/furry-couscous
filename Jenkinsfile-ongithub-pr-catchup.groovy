@@ -169,7 +169,7 @@ pipeline {
                                         continue
                                     }
                                     def tm_events = getGitHubPRIssueTimelineEvents(repository_owner, repository_name, env.GITHUB_PASSWORD, pr.number)
-                                    println("Last build for Jenkins job is ${last_build.id} (${job_url}${last_build.id}/): startTimeInMillis=${last_build.startTimeInMillis}")
+                                    println("Last build for Jenkins job is ${job_url}${last_build.id}/: startTimeInMillis=${last_build.startTimeInMillis}")
 
                                     // Scan the timeline events received **after** the last build start time
                                     def tm_events_to_check = []
@@ -214,7 +214,7 @@ pipeline {
                                         }
                                         
                                         if (event.event == 'commented') {
-                                            def matcher = Pattern.compile(/\A@jenkins-dataiku\s*\r\n(```|~~~)(json)?\r\n(?<BUILDERCONF>\{.+\})\r\n\1.*\Z/, Pattern.DOTALL).matcher(event.body as String)
+                                            def matcher = Pattern.compile(/\A@jenkins-dataiku\s*\r\n(```|~~~)(json)?\r\n(?<BUILDERCONF>\{.+\})\r\n\s*\1.*\Z/, Pattern.DOTALL).matcher(event.body as String)
                                             if (matcher.matches()) {
                                                 reason += "• Comment ${event.html_url} was added.\n"
                                                 skip_pr = false
