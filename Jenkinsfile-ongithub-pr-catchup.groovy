@@ -215,6 +215,8 @@ pipeline {
                                             if (matcher.matches()) {
                                                 reason += "• Comment <${event.html_url}|`${event.id}`> was added.\n"
                                                 skip_pr = false
+                                            } else {
+                                                reason += "• Comment <${event.html_url}|`${event.id}`> was added but does not contain a builder template.\n"
                                             }
                                             matcher = null
                                             continue
@@ -225,13 +227,13 @@ pipeline {
                                     last_build = null
                                     writeJSON file: "PR-${pr.number}-tm-events.json", json: tm_events
                                     if (skip_pr) {
-                                        println("Nothing to do for this PR (GitHub plugin should work automatically) because:\n${reason}")
+                                        println("No need to trigger this PR explicitly because:\n${reason}")
                                     } else {
                                         println("Should trigger this PR explicitly because:\n${reason}")
                                         def text = "Jenkins job should be triggered explicitly for this <${pr.html_url}|*PR ${pr.number}*> because:\n${reason}\nHere is the <${job_url}|Jenkins job>"
                                         slack_blocks.add(['type': 'section', 'text': ['type': 'mrkdwn', 'text': text]])
                                         slack_blocks.add(['type': 'divider'])
-                                        slack_prs.add(pr.number)
+                                        slack_prs.add("PR ${pr.html_url} because:\n${reason}")
                                         //job.scheduleBuild(0, new hudson.model.Cause.UserIdCause("jenkins"))
                                     }
                                 }
@@ -241,6 +243,7 @@ pipeline {
                                 withCredentials([string(credentialsId: 'jenkins-slack', variable: 'JENKINS_SLACK')]) {
                                     def slack_send_result = local_send_slack(env.JENKINS_SLACK, '@regis.painblanc', "Some Jenkins jobs for GitHub PR must be triggered manually", slack_blocks)
                                     println("Slack send result: ${slack_send_result}")
+                                    println("Summary:\n======\n"+slack_prs.join("======\n"))
                                 }
                             }
                         } finally {
