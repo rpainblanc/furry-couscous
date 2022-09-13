@@ -182,15 +182,16 @@ pipeline {
                                             date = event.created_at
                                         } else {
                                             // Not interesting event
-                                            println("Ignore event ${event.event}")
+                                            println("Ignore event '${event.event}'")
                                             continue
                                         }
                                         def date_millis = OffsetDateTime.parse(date).toEpochSecond() * 1000
                                         if (date_millis < last_build.startTimeInMillis) {
                                             // Event before last execution time    
-                                            println("Ignore event ${event.event}, it is before last build execution time: ${date_millis} < ${last_build.startTimeInMillis}")
+                                            println("Ignore event '${event.event}', it is before last build execution time: ${date_millis} < ${last_build.startTimeInMillis}")
                                             continue
                                         }
+                                        println("Retain to check event '${event.event}', it is after last build execution time: ${date_millis} > ${last_build.startTimeInMillis}")
                                         tm_events_to_check.add(event)
                                     }
 
