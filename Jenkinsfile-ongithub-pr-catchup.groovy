@@ -12,6 +12,9 @@ pipeline {
                     def jenkins_lib_groovy = load 'lib.groovy'
                     withCredentials([
                             usernamePassword(credentialsId: 'jenkins-dataiku', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_PASSWORD')]) {
+                        def jenkins_directory_name = 'dip-on-github-pr'
+                        def job_name = "${jenkins_directory_name}/PR-${pr.number}"
+                        def job = Jenkins.get().getItemByFullName(job_name)
                         def tm_events = jenkins_lib_groovy.getGitHubPRIssueTimelineEvents(env.GITHUB_PASSWORD, "17873")
                         def pr_issue_comments = jenkins_lib_groovy.getGitHubPRIssueComments(env.GITHUB_PASSWORD, "17873")
                         def builder_template = jenkins_lib_groovy.findBuilderTemplateInGithubIssueComments(pr_issue_comments)
