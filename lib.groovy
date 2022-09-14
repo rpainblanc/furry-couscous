@@ -71,10 +71,10 @@ def getGitHubPRIssueTimelineEvents(String github_token, String pr_number) {
 }
 
 def findBuilderTemplateInGithubIssueComments(def github_issue_comments) {
-    Pattern pattern
-    Matcher matcher
+    transient Pattern pattern
+    transient Matcher matcher
     def bt_comments = []
-    try {
+    // try {
         pattern = Pattern.compile(getBuilderTemplateGithubRegex(), Pattern.DOTALL)
         for (comment in github_issue_comments) {
             matcher = pattern.matcher(comment.body as String)
@@ -106,11 +106,11 @@ def findBuilderTemplateInGithubIssueComments(def github_issue_comments) {
         } else {
             return null
         }
-    } finally {
+    // } finally {
         // BEWARE java.util.regex.[Pattern | Matcher] are not serializable, make sure all of them are set to null before exiting the method
-        pattern = null
-        matcher = null
-    }
+        //pattern = null
+        // matcher = null
+    // }
 }
 
 @NonCPS

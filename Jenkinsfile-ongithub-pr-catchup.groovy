@@ -14,8 +14,10 @@ pipeline {
                             usernamePassword(credentialsId: 'jenkins-dataiku', usernameVariable: 'GITHUB_USER', passwordVariable: 'GITHUB_PASSWORD')]) {
                         def tm_events = jenkins_lib_groovy.getGitHubPRIssueTimelineEvents(env.GITHUB_PASSWORD, "17873")
                         def pr_issue_comments = jenkins_lib_groovy.getGitHubPRIssueComments(env.GITHUB_PASSWORD, "17873")
+                        def builder_template = jenkins_lib_groovy.findBuilderTemplateInGithubIssueComments(pr_issue_comments)
                         writeJSON file: 'github-issue-events.json', json: tm_events
                         writeJSON file: 'github-issue-comments.json', json: pr_issue_comments
+                        writeJSON file: 'builder-template.json', json: builder_template
                         archiveArtifacts artifacts: '*.json', allowEmptyArchive: true
                     }
                 }
