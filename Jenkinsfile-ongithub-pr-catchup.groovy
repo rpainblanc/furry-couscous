@@ -17,7 +17,7 @@ pipeline {
                             for (pr_number in prs) {
                                 def jenkins_directory_name = 'dip-on-github-pr'
                                 def job_name = "${jenkins_directory_name}/PR-${pr_number}"
-                                def job = Jenkins.get().getItemByFullName(job_name)
+                                transient def job = Jenkins.get().getItemByFullName(job_name)
                                 def tm_events = jenkins_lib_groovy.getGitHubPRIssueTimelineEvents(env.GITHUB_PASSWORD, pr_number)
                                 def pr_issue_comments = jenkins_lib_groovy.getGitHubPRIssueComments(env.GITHUB_PASSWORD, pr_number)
                                 def builder_template = jenkins_lib_groovy.findBuilderTemplateInGithubIssueComments(pr_issue_comments)
