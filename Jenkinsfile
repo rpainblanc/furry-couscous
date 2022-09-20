@@ -72,6 +72,9 @@ pipeline {
                                     sh 'pwd && ls -al'
                                     if (env.PULL_IMAGES == 'true') {
                                         println("PULLING IMAGES")
+                                        sh '''
+                                            cat 'all-docker-images.csv' | xargs -t -L 1 -J image echo docker pull img
+                                        '''
                                     }
                                 } finally {
                                     archiveArtifacts artifacts: '*.json,*.csv', allowEmptyArchive: true
