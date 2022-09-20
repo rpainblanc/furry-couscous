@@ -42,7 +42,7 @@ pipeline {
                     def image_lines = []
                     for (image in docker_images) {
                         for (tag in image.tags) {
-                            image_lines.add("${image}:${tag}")
+                            image_lines.add("${image.name}:${tag}")
                         }
                     }
                     writeFile file: 'all-docker-images.csv', text: image_lines.join('\n')
