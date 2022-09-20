@@ -1,3 +1,8 @@
+// The base name for DKU QA Docker images
+def dku_qa_docker_base_name = 'dku-qa-docker-images'
+
+// The name of the AWS registry where the Docker images are pushed
+def dku_qa_aws_ecr_registry = '236706865914.dkr.ecr.eu-west-1.amazonaws.com'
  
 // The list of Docker images, in the format: ["name": "<image name>", "tags": ["latest", "38"]]
 def docker_images = []
