@@ -1,21 +1,33 @@
 pipeline {
     agent {
-        label 'built-in'
+        label 'docker-builder-low && dku30-low'
     }
     stages {
         stage('init') {
             steps {
                 script {
-                    def commit_id = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim()
-                    currentBuild.description = "Git hash: ${commit_id}"
-                    dir('out') {
-                        deleteDir()
+                    sh 'printenv | sort'
+                    sh 'pwd && ls -al'
+                }
+            }
+        }
+        stage('pull') {
+            steps {
+                script {
+                    def docker_builder_nodes = nodesByLabel 'docker-builder-low && internal-node'
+                    for (docker_builder_node in docker_builder_nodes) {
+                        if (docker_builder_node == env.NODE_NAME) {
+                            println("Node ${docker_builder_node} is current node, nothing to do here")
+                        } else {
+                            node(docker_builder_node) {
+                                sh 'printenv | sort'
+                                sh 'pwd && ls -al'
+                            }
+                        }
                     }
-                    sh 'printenv > out/printenv.txt | sort'
-                    sleep 5
-                    archiveArtifacts artifacts: 'out/**', allowEmptyArchive: true
                 }
             }
         }
     }
 }
+
