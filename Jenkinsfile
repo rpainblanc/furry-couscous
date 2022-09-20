@@ -6,7 +6,9 @@ pipeline {
         stage('init') {
             steps {
                 script {
+                    sh 'git reset --hard && git clean -xfdf'
                     sh 'printenv | sort'
+                    sh 'printenv > content.txt'
                     sh 'pwd && ls -al'
                 }
             }
@@ -20,7 +22,9 @@ pipeline {
                             println("Node ${docker_builder_node} is current node, nothing to do here")
                         } else {
                             node(docker_builder_node) {
+                                deleteDir()
                                 sh 'printenv | sort'
+                                sh 'printenv > content.txt'
                                 sh 'pwd && ls -al'
                             }
                         }
