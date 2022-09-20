@@ -73,7 +73,7 @@ pipeline {
                                     if (env.PULL_IMAGES == 'true') {
                                         println("PULLING IMAGES")
                                         sh '''
-                                            cat 'all-docker-images.csv' | xargs --verbose --max-lines 1 --replace=image echo docker pull image
+                                            cat 'all-docker-images.csv' | xargs --verbose --max-lines=1 --replace=image echo docker pull image
                                         '''
                                     }
                                 } finally {
