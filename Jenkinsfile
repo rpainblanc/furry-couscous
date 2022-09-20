@@ -34,22 +34,22 @@ pipeline {
                     if (env.BUILD_IMAGES == 'true') {
                         println("BUILDING IMAGES")
                         def new_image = [
-                                "name": "${env.DKU_QA_AWS_ECR_REGISTRY}/${env.DKU_QA_DOCKER_PREFIX}/${env.DKU_QA_DOCKER_IMAGE}",
+                                "name": env.DKU_QA_DOCKER_IMAGE,
                                 "tags": ["latest", env.BUILD_NUMBER]]
                         docker_images.add(new_image)
                     }
 
+                    def image_and_tag_lines = []
                     def image_lines = []
-                    def registry_lines = []
                     for (image in docker_images) {
-                        registry_lines.add(image.name)
+                        image_lines.add(image.name)
                         for (tag in image.tags) {
-                            image_lines.add("${image.name}:${tag}")
+                            image_and_tag_lines.add("${image.name}:${tag}")
                         }
                     }
+                    writeFile file: 'docker-images-and-tags.csv', text: image_and_tag_lines.join('\n')
                     writeFile file: 'docker-images.csv', text: image_lines.join('\n')
-                    writeFile file: 'docker-registries.csv', text: registry_lines.join('\n')
-                    stash includes: 'docker-images.csv,docker-registries.csv', name: 'docker-images', allowEmpty: true
+                    stash includes: 'docker-images*.csv', name: 'docker-images', allowEmpty: true
 
                     if (params.BUILD_IMAGES == 'true' && params.PUSH_IMAGES == 'true') {
                         println("PUSHING IMAGES")
@@ -76,11 +76,11 @@ pipeline {
                                     if (env.PULL_IMAGES == 'true') {
                                         println("PULLING IMAGES")
                                         sh '''
-                                            for image in $(cat 'docker-images.csv'); do
-                                                echo docker pull ${image}
+                                            for image in $(cat 'docker-images-and-tags.csv'); do
+                                                echo docker pull ${DKU_QA_AWS_ECR_REGISTRY}/${DKU_QA_DOCKER_PREFIX}/${image}
                                             done
-                                            for registry in $(cat 'docker-registries.csv'); do
-                                                echo aws ecr describe-images --region eu-west-1 --output json --repository-name ${registry} > aws-ecr-registry-${registry}.json
+                                            for image in $(cat 'docker-images.csv'); do
+                                                echo aws ecr describe-images --region eu-west-1 --output json --repository-name ${DKU_QA_AWS_ECR_REGISTRY}/${DKU_QA_DOCKER_PREFIX}/${image} > aws-ecr-registry-${image}.json
                                             done
                                         '''
                                     }
