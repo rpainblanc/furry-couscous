@@ -22,6 +22,16 @@ pipeline {
                     if (env.BUILD_IMAGES == 'true') {
                         println("BUILDING IMAGES")
                     }
+
+                    def image_lines = []
+                    for (image in docker_images) {
+                        for (tag in image.tags) {
+                            image_lines.add("${image}:${tag}")
+                        }
+                    }
+                    writeFile file: 'all-docker-images.csv', text: image_lines.join('\n')
+                    stash includes: 'all-docker-images.csv', name: 'all-docker-images', allowEmpty: true
+
                     if (params.BUILD_IMAGES == 'true' && params.PUSH_IMAGES == 'true') {
                         println("PUSHING IMAGES")
                     }
@@ -37,12 +47,18 @@ pipeline {
                             println("Node ${docker_builder_node} is current node, nothing to do here")
                         } else {
                             node(docker_builder_node) {
-                                deleteDir()
-                                sh 'printenv | sort'
-                                sh 'printenv > content.txt'
-                                sh 'pwd && ls -al'
-                                if (env.PULL_IMAGES == 'true') {
-                                    println("PULLING IMAGES")
+                                try {
+                                    deleteDir()
+                                    unstash 'all-docker-images'
+    
+                                    sh 'printenv | sort'
+                                    sh 'printenv > content.txt'
+                                    sh 'pwd && ls -al'
+                                    if (env.PULL_IMAGES == 'true') {
+                                        println("PULLING IMAGES")
+                                    }
+                                } finally {
+                                    archiveArtifacts artifacts: '*.json,*.csv', allowEmptyArchive: true
                                 }
                             }
                         }
