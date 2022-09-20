@@ -6,13 +6,20 @@ pipeline {
     agent {
         label 'docker-builder-low && dku30-low'
     }
+    environment {
+        DKU_QA_DOCKER_PREFIX = dku_qa_docker_base_name
+        DKU_QA_AWS_ECR_REGISTRY = dku_qa_aws_ecr_registry
+    }
     parameters {
         booleanParam(name: 'BUILD_IMAGES', defaultValue: true, description: 'Build the Docker images')
         booleanParam(name: 'PUSH_IMAGES', defaultValue: false, description: 'Push the Docker images into ECR')
         booleanParam(name: 'PULL_IMAGES', defaultValue: false, description: 'Pull the Docker images from ECR')
     }
     stages {
-        stage('init') {
+        stage('image jenkins-builder') {
+            environment {
+                DKU_QA_DOCKER_IMAGE = 'new-jenkins-builder'
+            }
             steps {
                 script {
                     sh 'git reset --hard && git clean -xfdf'
@@ -21,6 +28,10 @@ pipeline {
                     sh 'pwd && ls -al'
                     if (env.BUILD_IMAGES == 'true') {
                         println("BUILDING IMAGES")
+                        def new_image = [
+                                "name": "${env.DKU_QA_AWS_ECR_REGISTRY}/${env.DKU_QA_DOCKER_PREFIX}/${env.DKU_QA_DOCKER_IMAGE}",
+                                "tags": ["latest", env.BUILD_NUMBER]]
+                        docker_images.add(new_image)
                     }
 
                     def image_lines = []
