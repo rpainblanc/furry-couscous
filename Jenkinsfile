@@ -1,6 +1,15 @@
+ 
+// The list of Docker images, in the format: ["name": "<image name>", "tags": ["latest", "38"]]
+def docker_images = []
+
 pipeline {
     agent {
         label 'docker-builder-low && dku30-low'
+    }
+    parameters {
+        booleanParam(name: 'BUILD_IMAGES', defaultValue: true, description: 'Build the Docker images')
+        booleanParam(name: 'PUSH_IMAGES', defaultValue: false, description: 'Push the Docker images into ECR')
+        booleanParam(name: 'PULL_IMAGES', defaultValue: false, description: 'Pull the Docker images from ECR')
     }
     stages {
         stage('init') {
@@ -10,6 +19,12 @@ pipeline {
                     sh 'printenv | sort'
                     sh 'printenv > content.txt'
                     sh 'pwd && ls -al'
+                    if (env.BUILD_IMAGES == 'true') {
+                        println("BUILDING IMAGES")
+                    }
+                    if (params.BUILD_IMAGES == 'true' && params.PUSH_IMAGES == 'true') {
+                        println("PUSHING IMAGES")
+                    }
                 }
             }
         }
@@ -26,6 +41,9 @@ pipeline {
                                 sh 'printenv | sort'
                                 sh 'printenv > content.txt'
                                 sh 'pwd && ls -al'
+                                if (env.PULL_IMAGES == 'true') {
+                                    println("PULLING IMAGES")
+                                }
                             }
                         }
                     }
