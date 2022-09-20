@@ -12,8 +12,8 @@ pipeline {
         label 'docker-builder-low && dku30-low'
     }
     environment {
-        DKU_QA_DOCKER_PREFIX = dku_qa_docker_base_name
-        DKU_QA_AWS_ECR_REGISTRY = dku_qa_aws_ecr_registry
+        DKU_QA_DOCKER_PREFIX = "${dku_qa_docker_base_name}"
+        DKU_QA_AWS_ECR_REGISTRY = "${dku_qa_aws_ecr_registry}"
     }
     parameters {
         booleanParam(name: 'BUILD_IMAGES', defaultValue: true, description: 'Build the Docker images')
