@@ -40,13 +40,16 @@ pipeline {
                     }
 
                     def image_lines = []
+                    def registry_lines = []
                     for (image in docker_images) {
+                        registry_lines.add(image.name)
                         for (tag in image.tags) {
                             image_lines.add("${image.name}:${tag}")
                         }
                     }
-                    writeFile file: 'all-docker-images.csv', text: image_lines.join('\n')
-                    stash includes: 'all-docker-images.csv', name: 'all-docker-images', allowEmpty: true
+                    writeFile file: 'docker-images.csv', text: image_lines.join('\n')
+                    writeFile file: 'docker-registries.csv', text: registry_lines.join('\n')
+                    stash includes: 'docker-images.csv,docker-registries.csv', name: 'docker-images', allowEmpty: true
 
                     if (params.BUILD_IMAGES == 'true' && params.PUSH_IMAGES == 'true') {
                         println("PUSHING IMAGES")
@@ -65,7 +68,7 @@ pipeline {
                             node(docker_builder_node) {
                                 try {
                                     deleteDir()
-                                    unstash 'all-docker-images'
+                                    unstash 'docker-images'
     
                                     sh 'printenv | sort'
                                     sh 'printenv > content.txt'
@@ -73,7 +76,12 @@ pipeline {
                                     if (env.PULL_IMAGES == 'true') {
                                         println("PULLING IMAGES")
                                         sh '''
-                                            cat 'all-docker-images.csv' | xargs --verbose --max-lines=1 --replace=image echo docker pull image
+                                            for image in $(cat 'docker-images.csv'); do
+                                                echo docker pull ${image}
+                                            done
+                                            for registry in $(cat 'docker-registries.csv'); do
+                                                echo aws ecr describe-images --region eu-west-1 --output json --repository-name ${registry} > aws-ecr-registry-${registry}.json
+                                            done
                                         '''
                                     }
                                 } finally {
